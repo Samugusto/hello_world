@@ -5,6 +5,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class MyApp extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20.0),
                 ),
                 width: 350,
-                height: 200,
+                height: 211,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
