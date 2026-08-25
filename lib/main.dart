@@ -1,197 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeuApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuApp extends StatelessWidget {
+  const MeuApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Academia',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
+      debugShowCheckedModeBanner: false,
+      title: "Minha Localização",
+      home: const LocalizacaoPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-
+class LocalizacaoPage extends StatefulWidget {
+  const LocalizacaoPage({super.key});
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LocalizacaoPage> createState() => _LocalizacaoPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final Set<int> checkedTreinos = {};
+class _LocalizacaoPageState extends State<LocalizacaoPage> {
+  double latitude = 0;
+  double longitude = 0;
+
+  Future<void> buscarLocalizacao() async {
+    bool servicoAtivo = await Geolocator.isLocationServiceEnabled();
+
+    if (!servicoAtivo) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+    LocationPermission permissao = await Geolocator.checkPermission();
+    if (permissao == LocationPermission.denied) {
+      permissao == await Geolocator.requestPermission();
+    }
+
+    if (permissao == LocationPermission.denied ||
+        permissao == LocationPermission.deniedForever) {
+      return;
+    }
+    Position posicao = await Geolocator.getCurrentPosition();
+    setState(() {
+      latitude = posicao.latitude;
+      longitude = posicao.longitude;
+    });
+    print('Latitude: $latitude');
+    print('Longitude: $longitude');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-        title: const Text('Treinos', style: TextStyle(color: Colors.white)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
-        ),
-        actions: const [
-          Icon(Icons.calendar_month, color: Colors.white),
-          SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(10),
-                itemCount: produtos.length,
-                itemBuilder: (context, index) {
-                  final produto = produtos[index];
-                  final checked = checkedTreinos.contains(produto.id);
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        radius: 26,
-                        backgroundImage: AssetImage(produto.imagePath),
-                        backgroundColor: Colors.grey.shade200,
-                      ),
-                      title: Text(produto.nome),
-                      subtitle: Text(produto.series),
-                      trailing: SizedBox(
-                        width: 48,
-                        child: Checkbox(
-                          value: checked,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value == true) {
-                                checkedTreinos.add(produto.id);
-                              } else {
-                                checkedTreinos.remove(produto.id);
-                              }
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
+      appBar: AppBar(title: const Text('Minha localização')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all((20)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+
+            children: [
+              const Icon(Icons.location_on, size: 80, color: Colors.red),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Localização atual',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 56,
-        color: Colors.black,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.home,
-                  color: Color.fromARGB(255, 255, 0, 0),
-                  size: 30,
-                ),
-                SizedBox(height: 1),
-                Text(
-                  'Home',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ],
-            ),
-            SizedBox(width: 20),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.sports_gymnastics, color: Colors.white),
-                SizedBox(height: 4),
-                Text(
-                  'Treinos',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ],
-            ),
-            SizedBox(width: 20),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.star, color: Colors.white),
-                SizedBox(height: 4),
-                Text(
-                  'Favorito',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ],
-            ),
-          ],
+              const SizedBox(height: 30),
+
+              Text('Latitude: $latitude', style: const TextStyle(fontSize: 18)),
+
+              const SizedBox(height: 10),
+
+              Text(
+                "Longitude: $longitude",
+                style: const TextStyle(fontSize: 10),
+              ),
+              const SizedBox(height: 30),
+
+              ElevatedButton(
+                onPressed: buscarLocalizacao,
+                child: const Text("Atualizar localização"),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-// MODELO DO PRODUTO
-class treinos {
-  final int id;
-  final String nome;
-  final String series;
-  final String imagePath;
-
-  const treinos({
-    required this.id,
-    required this.nome,
-    required this.series,
-    required this.imagePath,
-  });
-}
-
-const List<treinos> produtos = [
-  treinos(
-    id: 1,
-    nome: 'Supino com halteres (peito)',
-    series: '4 séries de 400 repetições',
-    imagePath: 'assets/images/supino.jpg',
-  ),
-
-  treinos(
-    id: 2,
-    nome: 'Elevação lateral (ombro)',
-    series: '4 séries de 400 repetições',
-    imagePath: 'assets/images/eleva.jpg',
-  ),
-
-  treinos(
-    id: 3,
-    nome: 'Triceps Pulley',
-    series: '4 séries de 400 repetições',
-    imagePath: 'assets/images/tricep.jpg',
-  ),
-
-  treinos(
-    id: 4,
-    nome: 'Abdomen',
-    series: '4 séries de 400 repetições',
-    imagePath: 'assets/images/abdomen.gif',
-  ),
-];
-
-// ITEM DO CARRINHO
-
-// Classe utilizada para representar um item armazenado dentro do carrinho.
-class ItemCarrinho {
-  final treinos produto;
-  int quantidade;
-  // Construtor.
-  ItemCarrinho(this.produto, this.quantidade);
 }
