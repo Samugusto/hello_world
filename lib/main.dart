@@ -1,18 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
-}
-
-String movimentoAcelera(double x, double y, double z) {
-  final intensidade = (x * x) + (y * y) + (z * z);
-
-  if (intensidade >= 6) {
-    return 'Dispositivo em movimento';
-  }
-
-  return 'Dispositivo parado';
 }
 
 class MyApp extends StatelessWidget {
@@ -21,86 +12,64 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const SensorPage(),
+      home: const CameraPage(),
     );
   }
 }
 
-class SensorPage extends StatefulWidget {
-  const SensorPage({super.key});
+class CameraPage extends StatefulWidget {
+  const CameraPage({super.key});
 
   @override
-  State<SensorPage> createState() => _SensorPageState();
+  State<CameraPage> createState() => _CameraPageState();
 }
 
-class _SensorPageState extends State<SensorPage> {
-  double x = 0;
-  double y = 0;
-  double z = 0;
+class _CameraPageState extends State<CameraPage> {
+  File? foto;
 
-  @override
-  void initState() {
-    super.initState();
+  Future<void> tirarFoto() async {
+    final picker = ImagePicker();
 
-    // Recebe a aceleração causada pelo movimento, sem a gravidade.
-    userAccelerometerEventStream().listen((event) {
+    final imagem = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (imagem != null) {
       setState(() {
-        x = event.x;
-        y = event.y;
-        z = event.z;
+        foto = File(imagem.path);
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final emMovimento = movimentoAcelera(x, y, z) == 'Dispositivo em movimento';
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Sensor do celular')),
-
+      appBar: AppBar(
+        title: const Text('Câmera'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Acelerômetro - aviso',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
+            if (foto != null)
+            ClipOval(
+              child: 
+              Image.file(
+                foto!,
+                width: 300,
+                height: 300,
+                fit: BoxFit.cover,
+              )
+            )
+            else
+              const Icon(Icons.account_circle, weight: 1200,),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
 
-            Text(
-              'X: ${x.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-
-            Text(
-              'Y: ${y.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-
-            Text(
-              'Z: ${z.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.circle,
-                  color: emMovimento ? Colors.red : Colors.green,
-                ),
-                const SizedBox(width: 8),
-
-                Text(
-                  emMovimento
-                      ? 'Dispositivo em movimento'
-                      : 'Dispositivo parado',
-                  style: const TextStyle(fontSize: 20),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: tirarFoto,
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('TIRAR FOTO'),
             ),
           ],
         ),
